@@ -1,6 +1,6 @@
 import sys
 from tkinter import Tk
-from Client import Client
+from client import Client
 
 if __name__ == "__main__":
 	try:
@@ -15,5 +15,6 @@ if __name__ == "__main__":
 	
 	# Create a new client
 	app = Client(root, serverAddr, serverPort, rtpPort, fileName)
-	app.master.title("RTPClient")	
+	app.master.title("RTPClient")
+	print("RTPClient started")	
 	root.mainloop()

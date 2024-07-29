@@ -20,5 +20,6 @@ class Server:
 			ServerWorker(clientInfo).run()		
 
 if __name__ == "__main__":
+	print("server started")
 	(Server()).main()
 

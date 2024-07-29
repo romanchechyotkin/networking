@@ -1,12 +1,13 @@
 from tkinter import *
-import tkinter.messagebox
+from tkinter import messagebox
 from PIL import Image, ImageTk
 import socket, threading, sys, traceback, os
 
-from RtpPacket import RtpPacket
+from rtp_packet import RtpPacket
 
 CACHE_FILE_NAME = "cache-"
 CACHE_FILE_EXT = ".jpg"
+
 
 class Client:
 	INIT = 0
@@ -75,7 +76,8 @@ class Client:
 		self.sendRtspRequest(self.TEARDOWN)		
 		self.master.destroy() # Close the gui window
 		os.remove(CACHE_FILE_NAME + str(self.sessionId) + CACHE_FILE_EXT) # Delete the cache image from video
-
+		sys.exit()
+		
 	def pauseMovie(self):
 		"""Pause button handler."""
 		if self.state == self.PLAYING:
@@ -138,7 +140,7 @@ class Client:
 		try:
 			self.rtspSocket.connect((self.serverAddr, self.serverPort))
 		except:
-			tkMessageBox.showwarning('Connection Failed', 'Connection to \'%s\' failed.' %self.serverAddr)
+			messagebox.showwarning('Connection Failed', 'Connection to \'%s\' failed.' %self.serverAddr)
 	
 	def sendRtspRequest(self, requestCode):
 		"""Send RTSP request to the server."""	
@@ -168,6 +170,7 @@ class Client:
 			
 			# Keep track of the sent request.
 			# self.requestSent = ...
+			return
 		
 		# Pause request
 		elif requestCode == self.PAUSE and self.state == self.PLAYING:
@@ -179,7 +182,8 @@ class Client:
 			
 			# Keep track of the sent request.
 			# self.requestSent = ...
-			
+			return
+		
 		# Teardown request
 		elif requestCode == self.TEARDOWN and not self.state == self.INIT:
 			# Update RTSP sequence number.
@@ -190,6 +194,8 @@ class Client:
 			
 			# Keep track of the sent request.
 			# self.requestSent = ...
+			return
+		
 		else:
 			return
 		
@@ -238,13 +244,16 @@ class Client:
 						self.openRtpPort() 
 					elif self.requestSent == self.PLAY:
 						# self.state = ...
+						return
 					elif self.requestSent == self.PAUSE:
 						# self.state = ...
+						return
 						
 						# The play thread exits. A new thread is created on resume.
 						self.playEvent.set()
 					elif self.requestSent == self.TEARDOWN:
 						# self.state = ...
+						return
 						
 						# Flag the teardownAcked to close the socket.
 						self.teardownAcked = 1 
@@ -263,13 +272,14 @@ class Client:
 		try:
 			# Bind the socket to the address using the RTP port given by the client user
 			# ...
+			return
 		except:
-			tkMessageBox.showwarning('Unable to Bind', 'Unable to bind PORT=%d' %self.rtpPort)
+			messagebox.showwarning('Unable to Bind', 'Unable to bind PORT=%d' %self.rtpPort)
 
 	def handler(self):
 		"""Handler on explicitly closing the GUI window."""
 		self.pauseMovie()
-		if tkMessageBox.askokcancel("Quit?", "Are you sure you want to quit?"):
+		if messagebox.askokcancel("Quit?", "Are you sure you want to quit?"):
 			self.exitClient()
 		else: # When the user presses cancel, resume playing.
 			self.playMovie()
