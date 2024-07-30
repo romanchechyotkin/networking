@@ -1,7 +1,11 @@
+import os
+import socket
+import sys
+import threading
 from tkinter import *
 from tkinter import messagebox
+
 from PIL import Image, ImageTk
-import socket, threading, sys, traceback, os
 
 from rtp_packet import RtpPacket
 
@@ -131,11 +135,12 @@ class Client:
 	def updateMovie(self, imageFile):
 		"""Update the image file as video frame in the GUI."""
 		photo = ImageTk.PhotoImage(Image.open(imageFile))
-		self.label.configure(image = photo, height=288) 
+		self.label.configure(image=photo, height=288)
 		self.label.image = photo
 		
 	def connectToServer(self):
 		"""Connect to the Server. Start a new RTSP/TCP session."""
+		print(f"client connecting to server; server addr {self.serverAddr} server port {self.serverPort}")
 		self.rtspSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		try:
 			self.rtspSocket.connect((self.serverAddr, self.serverPort))
@@ -143,22 +148,19 @@ class Client:
 			messagebox.showwarning('Connection Failed', 'Connection to \'%s\' failed.' %self.serverAddr)
 	
 	def sendRtspRequest(self, requestCode):
-		"""Send RTSP request to the server."""	
-		#-------------
-		# TO COMPLETE
-		#-------------
-		
-		# Setup request
+		"""Send RTSP request to the server."""
+
+		# setup request
 		if requestCode == self.SETUP and self.state == self.INIT:
 			threading.Thread(target=self.recvRtspReply).start()
 			# Update RTSP sequence number.
-			# ...
-			
+			self.rtspSeq += 1
+
 			# Write the RTSP request to be sent.
-			# request = ...
+			request = f"SETUP {self.fileName}\nCSeq: {self.rtspSeq}\nTransport: RTP/UDP; client_port= {self.rtpPort}"
 			
 			# Keep track of the sent request.
-			# self.requestSent = ...
+			self.requestSent = self.SETUP
 		
 		# Play request
 		elif requestCode == self.PLAY and self.state == self.READY:
@@ -199,9 +201,9 @@ class Client:
 		else:
 			return
 		
-		# Send the RTSP request using rtspSocket.
-		# ...
-		
+		# sending the RTSP request using rtspSocket.
+		self.rtspSocket.send(str.encode(request))
+
 		print('\nData sent:\n' + request)
 	
 	def recvRtspReply(self):
@@ -220,6 +222,7 @@ class Client:
 	
 	def parseRtspReply(self, data):
 		"""Parse the RTSP reply from the server."""
+		print("got reply", data)
 		lines = data.split('\n')
 		seqNum = int(lines[1].split(' ')[1])
 		
@@ -234,11 +237,8 @@ class Client:
 			if self.sessionId == session:
 				if int(lines[0].split(' ')[1]) == 200: 
 					if self.requestSent == self.SETUP:
-						#-------------
-						# TO COMPLETE
-						#-------------
 						# Update RTSP state.
-						# self.state = ...
+						self.state = self.READY
 						
 						# Open RTP port.
 						self.openRtpPort() 
@@ -259,19 +259,18 @@ class Client:
 						self.teardownAcked = 1 
 	
 	def openRtpPort(self):
+		print("opening rtp port")
 		"""Open RTP socket binded to a specified port."""
-		#-------------
-		# TO COMPLETE
-		#-------------
-		# Create a new datagram socket to receive RTP packets from the server
-		# self.rtpSocket = ...
+		# todo
+		# create a new datagram socket to receive RTP packets from the server
+		self.rtpSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		
-		# Set the timeout value of the socket to 0.5sec
-		# ...
+		# set the timeout value of the socket to 0.5sec
+		self.rtpSocket.settimeout(0.5)  # in seconds
 		
 		try:
-			# Bind the socket to the address using the RTP port given by the client user
-			# ...
+			# bind the socket to the address using the RTP port given by the client user
+			self.rtpSocket.bind(("127.0.0.1", self.rtpPort))
 			return
 		except:
 			messagebox.showwarning('Unable to Bind', 'Unable to bind PORT=%d' %self.rtpPort)

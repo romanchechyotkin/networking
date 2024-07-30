@@ -1,8 +1,10 @@
+import socket
+import threading
 from random import randint
-import sys, traceback, threading, socket
 
-from video_stream import VideoStream
 from rtp_packet import RtpPacket
+from video_stream import VideoStream
+
 
 class ServerWorker:
 	SETUP = 'SETUP'
@@ -29,9 +31,10 @@ class ServerWorker:
 	
 	def recvRtspRequest(self):
 		"""Receive RTSP request from the client."""
-		connSocket = self.clientInfo['rtspSocket'][0]
+		conn_socket = self.clientInfo['rtspSocket'][0]
+		print("connection socket", conn_socket)
 		while True:            
-			data = connSocket.recv(256)
+			data = conn_socket.recv(256)
 			if data:
 				print("Data received:\n" + data.decode("utf-8"))
 				self.processRtspRequest(data.decode("utf-8"))
@@ -39,10 +42,11 @@ class ServerWorker:
 	def processRtspRequest(self, data):
 		"""Process RTSP request sent from the client."""
 		# Get the request type
+		print("got request", data)
 		request = data.split('\n')
 		line1 = request[0].split(' ')
-		requestType = line1[0]
-		
+		request_type = line1[0]
+
 		# Get the media file name
 		filename = line1[1]
 		
@@ -50,7 +54,7 @@ class ServerWorker:
 		seq = request[1].split(' ')
 		
 		# Process SETUP request
-		if requestType == self.SETUP:
+		if request_type == self.SETUP:
 			if self.state == self.INIT:
 				# Update state
 				print("processing SETUP\n")
@@ -71,7 +75,7 @@ class ServerWorker:
 				self.clientInfo['rtpPort'] = request[2].split(' ')[3]
 		
 		# Process PLAY request 		
-		elif requestType == self.PLAY:
+		elif request_type == self.PLAY:
 			if self.state == self.READY:
 				print("processing PLAY\n")
 				self.state = self.PLAYING
@@ -87,7 +91,7 @@ class ServerWorker:
 				self.clientInfo['worker'].start()
 		
 		# Process PAUSE request
-		elif requestType == self.PAUSE:
+		elif request_type == self.PAUSE:
 			if self.state == self.PLAYING:
 				print("processing PAUSE\n")
 				self.state = self.READY
@@ -97,7 +101,7 @@ class ServerWorker:
 				self.replyRtsp(self.OK_200, seq[1])
 		
 		# Process TEARDOWN request
-		elif requestType == self.TEARDOWN:
+		elif request_type == self.TEARDOWN:
 			print("processing TEARDOWN\n")
 
 			self.clientInfo['event'].set()
