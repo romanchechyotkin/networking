@@ -260,7 +260,7 @@ class Client:
 	def openRtpPort(self):
 		print("opening rtp port")
 		"""Open RTP socket binded to a specified port."""
-		# todo
+
 		# create a new datagram socket to receive RTP packets from the server
 		self.rtpSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		
