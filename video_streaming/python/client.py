@@ -165,15 +165,14 @@ class Client:
 		# Play request
 		elif requestCode == self.PLAY and self.state == self.READY:
 			# Update RTSP sequence number.
-			# ...
-			
+			self.rtspSeq += 1
+
 			# Write the RTSP request to be sent.
-			# request = ...
-			
-			# Keep track of the sent request.
-			# self.requestSent = ...
-			return
-		
+			request = f"PLAY {self.fileName}\nCSeq: {self.rtspSeq}\nSession: {self.sessionId}"
+
+			# keep track of the sent request.
+			self.requestSent = self.PLAY
+
 		# Pause request
 		elif requestCode == self.PAUSE and self.state == self.PLAYING:
 			# Update RTSP sequence number.
@@ -270,7 +269,7 @@ class Client:
 		
 		try:
 			# bind the socket to the address using the RTP port given by the client user
-			self.rtpSocket.bind(("127.0.0.1", self.rtpPort))
+			self.rtpSocket.bind(("", self.rtpPort))
 			return
 		except:
 			messagebox.showwarning('Unable to Bind', 'Unable to bind PORT=%d' %self.rtpPort)
