@@ -2,6 +2,7 @@ import os
 import socket
 import sys
 import threading
+import time
 from tkinter import *
 from tkinter import messagebox
 
@@ -78,10 +79,9 @@ class Client:
 	def exitClient(self):
 		"""Teardown button handler."""
 		self.sendRtspRequest(self.TEARDOWN)		
-		self.master.destroy() # Close the gui window
+
 		os.remove(CACHE_FILE_NAME + str(self.sessionId) + CACHE_FILE_EXT) # Delete the cache image from video
-		sys.exit()
-		
+
 	def pauseMovie(self):
 		"""Pause button handler."""
 		if self.state == self.PLAYING:
@@ -111,6 +111,7 @@ class Client:
 					if currFrameNbr > self.frameNbr: # Discard the late packet
 						self.frameNbr = currFrameNbr
 						self.updateMovie(self.writeFrame(rtpPacket.getPayload()))
+
 			except:
 				# Stop listening upon requesting PAUSE or TEARDOWN
 				if self.playEvent.isSet(): 
@@ -133,6 +134,10 @@ class Client:
 		return cachename
 	
 	def updateMovie(self, imageFile):
+		if imageFile is None:
+			self.label.image = None
+			return
+
 		"""Update the image file as video frame in the GUI."""
 		photo = ImageTk.PhotoImage(Image.open(imageFile))
 		self.label.configure(image=photo, height=288)
@@ -176,27 +181,25 @@ class Client:
 		# Pause request
 		elif requestCode == self.PAUSE and self.state == self.PLAYING:
 			# Update RTSP sequence number.
-			# ...
-			
+			self.rtspSeq += 1
+
 			# Write the RTSP request to be sent.
-			# request = ...
-			
+			request = f"PAUSE {self.fileName}\nCSeq: {self.rtspSeq}\nSession: {self.sessionId}"
+
 			# Keep track of the sent request.
-			# self.requestSent = ...
-			return
-		
+			self.requestSent = self.PAUSE
+
 		# Teardown request
 		elif requestCode == self.TEARDOWN and not self.state == self.INIT:
 			# Update RTSP sequence number.
-			# ...
-			
+			self.rtspSeq += 1
+
 			# Write the RTSP request to be sent.
-			# request = ...
-			
+			request = f"TEARDOWN {self.fileName}\nCSeq: {self.rtspSeq}\nSession: {self.sessionId}"
+
 			# Keep track of the sent request.
-			# self.requestSent = ...
-			return
-		
+			self.requestSent = self.TEARDOWN
+
 		else:
 			return
 		
@@ -215,6 +218,7 @@ class Client:
 			
 			# Close the RTSP socket upon requesting Teardown
 			if self.requestSent == self.TEARDOWN:
+				self.updateMovie(None)
 				self.rtspSocket.shutdown(socket.SHUT_RDWR)
 				self.rtspSocket.close()
 				break
@@ -242,18 +246,16 @@ class Client:
 						# Open RTP port.
 						self.openRtpPort() 
 					elif self.requestSent == self.PLAY:
-						# self.state = ...
-						return
+						self.state = self.PLAYING
+
 					elif self.requestSent == self.PAUSE:
-						# self.state = ...
-						return
-						
+						self.state = self.READY
+
 						# The play thread exits. A new thread is created on resume.
 						self.playEvent.set()
 					elif self.requestSent == self.TEARDOWN:
-						# self.state = ...
-						return
-						
+						self.state = self.INIT
+
 						# Flag the teardownAcked to close the socket.
 						self.teardownAcked = 1 
 	
@@ -278,6 +280,6 @@ class Client:
 		"""Handler on explicitly closing the GUI window."""
 		self.pauseMovie()
 		if messagebox.askokcancel("Quit?", "Are you sure you want to quit?"):
-			self.exitClient()
+			sys.exit()
 		else: # When the user presses cancel, resume playing.
 			self.playMovie()
