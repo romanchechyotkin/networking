@@ -14,7 +14,7 @@ class Server:
 		rtspSocket.bind(('', server_port))
 		rtspSocket.listen(5)
 
-		# Receive client info (address,port) through RTSP/TCP session
+		# Receive client info (address,port, room) through RTSP/TCP session
 		while True:
 			clientInfo = {}
 			clientInfo['rtspSocket'] = rtspSocket.accept()

@@ -2,7 +2,6 @@ import os
 import socket
 import sys
 import threading
-import time
 from tkinter import *
 from tkinter import messagebox
 
@@ -26,7 +25,7 @@ class Client:
 	TEARDOWN = 3
 	
 	# Initiation..
-	def __init__(self, master, serveraddr, serverport, rtpport, filename):
+	def __init__(self, master, serveraddr, serverport, rtpport, filename, room):
 		self.master = master
 		self.master.protocol("WM_DELETE_WINDOW", self.handler)
 		self.createWidgets()
@@ -40,6 +39,7 @@ class Client:
 		self.teardownAcked = 0
 		self.connectToServer()
 		self.frameNbr = 0
+		self.room = room
 		
 	def createWidgets(self):
 		"""Build GUI."""
@@ -162,7 +162,7 @@ class Client:
 			self.rtspSeq += 1
 
 			# Write the RTSP request to be sent.
-			request = f"SETUP {self.fileName}\nCSeq: {self.rtspSeq}\nTransport: RTP/UDP; client_port= {self.rtpPort}"
+			request = f"SETUP {self.fileName}\nCSeq: {self.rtspSeq}\nTransport: RTP/UDP; client_port= {self.rtpPort}; room_id= {self.room}"
 			
 			# Keep track of the sent request.
 			self.requestSent = self.SETUP
@@ -173,7 +173,7 @@ class Client:
 			self.rtspSeq += 1
 
 			# Write the RTSP request to be sent.
-			request = f"PLAY {self.fileName}\nCSeq: {self.rtspSeq}\nSession: {self.sessionId}"
+			request = f"PLAY {self.fileName}\nCSeq: {self.rtspSeq}\nSession: {self.sessionId}; room_id= {self.room}"
 
 			# keep track of the sent request.
 			self.requestSent = self.PLAY
@@ -184,7 +184,7 @@ class Client:
 			self.rtspSeq += 1
 
 			# Write the RTSP request to be sent.
-			request = f"PAUSE {self.fileName}\nCSeq: {self.rtspSeq}\nSession: {self.sessionId}"
+			request = f"PAUSE {self.fileName}\nCSeq: {self.rtspSeq}\nSession: {self.sessionId}; room_id= {self.room}"
 
 			# Keep track of the sent request.
 			self.requestSent = self.PAUSE
@@ -195,7 +195,7 @@ class Client:
 			self.rtspSeq += 1
 
 			# Write the RTSP request to be sent.
-			request = f"TEARDOWN {self.fileName}\nCSeq: {self.rtspSeq}\nSession: {self.sessionId}"
+			request = f"TEARDOWN {self.fileName}\nCSeq: {self.rtspSeq}\nSession: {self.sessionId}; room_id= {self.room}"
 
 			# Keep track of the sent request.
 			self.requestSent = self.TEARDOWN

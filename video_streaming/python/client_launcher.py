@@ -9,13 +9,14 @@ if __name__ == "__main__":
 		server_port = sys.argv[2]
 		rtp_port = sys.argv[3]
 		filename = sys.argv[4]
+		room = sys.argv[5]
 	except:
 		print("[Usage: ClientLauncher.py Server_name Server_port RTP_port Video_file]\n")	
 	
 	root = Tk()
 	
 	# Create a new client
-	app = Client(root, server_addr, server_port, rtp_port, filename)
+	app = Client(root, server_addr, server_port, rtp_port, filename, room)
 	app.master.title("RTPClient")
 	print("RTPClient started")	
 	root.mainloop()
