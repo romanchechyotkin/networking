@@ -47,7 +47,7 @@ fn handle_connection(conn: TcpStream) {
         .collect();
 
     println!("request: {http_request:#?}");
-    handle_http_request(http_request);
+    // handle_http_request(http_request);
     // todo handle incoming request from connection
 }
 
