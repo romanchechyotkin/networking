@@ -5,8 +5,9 @@ use std::{
     fs,
     io::{self, BufRead, BufReader, Write},
     net::{TcpListener, TcpStream},
-    thread, usize,
 };
+
+use implementation::ThreadPool;
 
 /* HTTP Request Format
 
@@ -29,6 +30,7 @@ const PROTOCOL_VERSION: &str = "HTTP/1.1";
 
 fn main() {
     let listener = TcpListener::bind("127.0.0.1:5000").unwrap();
+    let thread_pool = ThreadPool::new(4);
 
     for stream in listener.incoming() {
         let mut conn = stream.unwrap();
@@ -36,7 +38,7 @@ fn main() {
 
         println!("connection established; {}", n);
 
-        thread::spawn(|| match handle_connection(conn) {
+        thread_pool.exec(|| match handle_connection(conn) {
             Ok(n) => println!("send response; length={}", n),
             Err(e) => println!("got error during sending response; error={:?}", e),
         });
